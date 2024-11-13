@@ -866,7 +866,7 @@ occur together. By analyzing how the prominence of these topics changes over tim
 
 def main():
     #st.image('/Users/senthilesakkiappan/Desktop/Stream_Lit_Myfolder/streamlit_01.jpg', width=700)
-    st.image('assets/streamlit_01.jpg', width=700)
+    st.image('assets/streamlit_01.jpg', width=600 ,)
     st.title("WAllytics - WhatsApp Chat Analysis")
 
     data = load_data()
