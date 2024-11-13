@@ -17,58 +17,154 @@ import pandas as pd
 import streamlit as st
 from datetime import datetime
 
+import re
+from datetime import datetime
+import pandas as pd
+
+import re
+from datetime import datetime
+import pandas as pd
+
+import re
+from datetime import datetime
+
+import re
+import pandas as pd
+from datetime import datetime
+
+import re
+from datetime import datetime
+
+import re
+from datetime import datetime
+import pandas as pd
+
 def parse_whatsapp_chat(uploaded_file):
-    # Read file with appropriate encoding
-    chat_data = uploaded_file.getvalue().decode("utf-8")
-    lines = chat_data.split('\n')
+    try:
+        chat_data = uploaded_file.getvalue().decode("utf-8")
+        lines = chat_data.split('\n')
 
-    parsed_data = []
-    current_message = {'timestamp': None, 'sender': None, 'message': []}
+        parsed_data = []
+        current_message = {'timestamp': None, 'sender': None, 'message': []}
 
-    # Updated regex to match "dd/mm/yy, h:mm AM/PM - Sender: message"
-    timestamp_pattern = r'\d{1,2}/\d{1,2}/\d{2}, \d{1,2}:\d{2}\s?[APap][Mm]\s-\s'
+        # Adjusted pattern for non-breaking spaces or invisible characters
+        timestamp_patterns = [
+            # dd/mm/yyyy, hh:mm (24-hour format)
+            (r'(\d{2}/\d{2}/\d{4}),\s*(\d{1,2}:\d{2})\s*([AaPp][Mm]?)?\s*-', 
+             lambda d, t, p: datetime.strptime(f"{d} {t} {p}" if p else f"{d} {t}", '%d/%m/%Y %I:%M %p' if p else '%d/%m/%Y %H:%M')),
 
-    for line in lines:
-        # Check if the line starts with a timestamp pattern
-        if re.match(timestamp_pattern, line):
-            # Save the previous message if it exists
-            if current_message['sender']:
-                parsed_data.append({
-                    'timestamp': current_message['timestamp'],
-                    'sender': current_message['sender'],
-                    'message': ' '.join(current_message['message']).strip()
-                })
-                current_message = {'timestamp': None, 'sender': None, 'message': []}
+            # dd/mm/yy, h:mm am/pm format
+            (r'(\d{1,2}/\d{1,2}/\d{2}),\s*(\d{1,2}:\d{2})\s*([AaPp][Mm])\s*-',
+             lambda d, t, p: datetime.strptime(f"{d}, {t} {p}", '%d/%m/%y, %I:%M %p')),
 
-            # Extract timestamp, sender, and message from the line
-            timestamp_str, rest = line.split(' - ', 1)
-            timestamp = datetime.strptime(timestamp_str, '%d/%m/%y, %I:%M %p')
+            # yyyy-mm-dd, hh:mm (24-hour format)
+            (r'(\d{4}-\d{2}-\d{2}),\s*(\d{2}:\d{2})\s*-\s*',
+             lambda d, t, _: datetime.strptime(f"{d} {t}", '%Y-%m-%d %H:%M')),
+
+            # dd-mm-yyyy, hh:mm (24-hour format)
+            (r'(\d{2}-\d{2}-\d{4}),\s*(\d{2}:\d{2})\s*-\s*',
+             lambda d, t, _: datetime.strptime(f"{d} {t}", '%d-%m-%Y %H:%M')),
+
+            # dd-mm-yy, h:mm am/pm format
+            (r'(\d{2}-\d{2}-\d{2}),\s*(\d{1,2}:\d{2})\s*([AaPp][Mm])\s*-',
+             lambda d, t, p: datetime.strptime(f"{d}, {t} {p}", '%d-%m-%y, %I:%M %p')),
+
+            # mm/dd/yy, h:mm am/pm format
+            (r'(\d{1,2}/\d{1,2}/\d{2}),\s*(\d{1,2}:\d{2})\s*([AaPp][Mm])\s*-',
+             lambda d, t, p: datetime.strptime(f"{d}, {t} {p}", '%m/%d/%y, %I:%M %p')),
+
+            # mm-dd-yyyy, hh:mm (24-hour format)
+            (r'(\d{2}-\d{2}-\d{4}),\s*(\d{2}:\d{2})\s*-\s*',
+             lambda d, t, _: datetime.strptime(f"{d} {t}", '%m-%d-%Y %H:%M')),
+
+            # dd/mm/yyyy, hh:mm am/pm (handling non-breaking spaces or special chars)
+            (r'(\d{2}/\d{2}/\d{4}),\s+(\d{1,2}:\d{2})\s*([AaPp][Mm])\s*-',
+             lambda d, t, p: datetime.strptime(f"{d}, {t} {p}", '%d/%m/%Y %I:%M %p')),
+
+            # New format: dd/mm/yyyy, h:mm am/pm format with non-breaking space (U+202F)
+            (r'(\d{2}/\d{2}/\d{4}),\s*(\d{1,2}:\d{2})\s*([\u202F]?[AaPp][Mm])\s*-',
+             lambda d, t, p: datetime.strptime(f"{d} {t} {p}", '%d/%m/%Y %I:%M %p')),
+        ]
+        
+        def parse_timestamp(line):
+            for pattern, parser in timestamp_patterns:
+                match = re.match(pattern, line)
+                if match:
+                    try:
+                        date_str, time_str = match.group(1), match.group(2)
+                        period = match.group(3) if len(match.groups()) > 2 else None
+                        timestamp = parser(date_str, time_str, period)
+                        message_start = match.end()
+                        return timestamp, line[message_start:]
+                    except ValueError:
+                        continue
+            return None, None
+
+        def parse_message_content(content):
+            if ': ' in content:
+                sender, message = content.split(': ', 1)
+                return sender.strip(), message.strip()
             
-            if ': ' in rest:
-                sender, message = rest.split(': ', 1)
-                current_message['timestamp'] = timestamp
-                current_message['sender'] = sender
-                current_message['message'].append(message)
-            else:
-                # Handle system messages or messages without a sender
-                current_message['timestamp'] = timestamp
-                current_message['sender'] = 'System'
-                current_message['message'].append(rest)
-        else:
-            # If it doesn't match the timestamp pattern, it must be a continuation of the previous message
-            current_message['message'].append(line)
-    
-    # Add the last message
-    if current_message['sender']:
-        parsed_data.append({
-            'timestamp': current_message['timestamp'],
-            'sender': current_message['sender'],
-            'message': ' '.join(current_message['message']).strip()
-        })
+            system_patterns = [
+                r'Messages and calls are end-to-end encrypted',
+                r'created group',
+                r'added',
+                r'joined using this group\'s invite link',
+                r'left',
+                r'removed',
+                r'changed the subject',
+                r'changed this group\'s icon',
+                r'changed the group description',
+                r'<Media omitted>',
+                r'This message was deleted',
+                r'You were added',
+                r'joined using this group\'s invite link'
+            ]
+            
+            for pattern in system_patterns:
+                if re.search(pattern, content):
+                    return 'System', content.strip()
+            
+            return 'System', content.strip()
 
-    # Convert parsed data to DataFrame
-    df = pd.DataFrame(parsed_data)
-    return df
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+            
+            timestamp, message_content = parse_timestamp(line)
+            
+            if timestamp:
+                if current_message['timestamp']:
+                    parsed_data.append({
+                        'timestamp': current_message['timestamp'],
+                        'sender': current_message['sender'],
+                        'message': ' '.join(current_message['message'])
+                    })
+                
+                sender, message = parse_message_content(message_content)
+                current_message = {
+                    'timestamp': timestamp,
+                    'sender': sender,
+                    'message': [message]
+                }
+            else:
+                current_message['message'].append(line)
+        
+        if current_message['timestamp']:
+            parsed_data.append({
+                'timestamp': current_message['timestamp'],
+                'sender': current_message['sender'],
+                'message': ' '.join(current_message['message'])
+            })
+
+        # Return the result as a dataframe
+        return pd.DataFrame(parsed_data)
+    
+    except Exception as e:
+        print(f"Error parsing chat: {e}")
+        return pd.DataFrame()
+
 
 def load_data():
     uploaded_file = st.file_uploader("Upload your WhatsApp chat file", type="txt")
@@ -882,7 +978,7 @@ def main():
             elif analysis_option == "About the App":
                 display_big_bold_centered_text("About the App")
                 st.write("""
-                          # WhatsApp Chat Analysis App
+                          # WAllytics - WhatsApp Chat Analysis App
                           Welcome to the WhatsApp Chat Analysis App! This application offers a range of analytical tools to help you
                           gain insights from your WhatsApp chat data. Here’s what you can do with this app:
 
