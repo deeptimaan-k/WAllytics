@@ -38,6 +38,8 @@ from datetime import datetime
 import re
 from datetime import datetime
 import pandas as pd
+import nltk
+nltk.download('punkt_tab')
 
 def parse_whatsapp_chat(uploaded_file):
     try:
