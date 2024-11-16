@@ -1,38 +1,24 @@
-
-
 import streamlit as st
 import pandas as pd
 import re
-import io
 import matplotlib.pyplot as plt
 import seaborn as sns
-import pandas as pd
-import streamlit as st
 from datetime import datetime
-
-import re
-from datetime import datetime
-import pandas as pd
-
-import re
-from datetime import datetime
-import pandas as pd
-
-import re
-from datetime import datetime
-
-import re
-import pandas as pd
-from datetime import datetime
-
-import re
-from datetime import datetime
-
-import re
-from datetime import datetime
-import pandas as pd
 import nltk
-nltk.download('punkt_tab')
+from textblob import TextBlob
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from gensim import corpora
+from gensim.models.ldamodel import LdaModel
+import numpy as np
+from sklearn.linear_model import LinearRegression
+from transformers import pipeline
+from collections import Counter
+import emoji
+from itertools import chain
+from wordcloud import WordCloud
+import random
+
 
 def parse_whatsapp_chat(uploaded_file):
     try:
@@ -168,8 +154,6 @@ def load_data():
     else:
         return None
 
-import matplotlib.pyplot as plt
-import streamlit as st
 
 def perform_eda(whatsapp_df):
     # Convert timestamp strings to datetime objects for analysis
@@ -235,7 +219,6 @@ def perform_date(whatsapp_df):
 
 
 
-from textblob import TextBlob
 
 def perform_sentiment_analysis(whatsapp_df):
     # Sentiment Analysis Function
@@ -251,9 +234,7 @@ def perform_sentiment_analysis(whatsapp_df):
 
     return whatsapp_df
 
-import matplotlib.pyplot as plt
-import seaborn as sns
-import streamlit as st
+
 
 def visualize_sentiment_analysis(whatsapp_df):
     # Sentiment Polarity Distribution
@@ -278,15 +259,11 @@ def visualize_sentiment_analysis(whatsapp_df):
     st.pyplot(plt)
 
 
-import nltk
-from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
-from gensim import corpora
-from gensim.models.ldamodel import LdaModel
-import streamlit as st
+
 
 # Ensure NLTK data is downloaded (you might need to handle this outside the function if it causes issues in Streamlit)
 nltk.download('punkt', quiet=True)
+nltk.download('punkt_tab', quiet=True)
 nltk.download('stopwords', quiet=True)
 
 def perform_topic_modeling(whatsapp_df, num_topics=5):
@@ -307,9 +284,6 @@ def perform_topic_modeling(whatsapp_df, num_topics=5):
     return lda_model
 
 
-import matplotlib.pyplot as plt
-import pandas as pd
-import streamlit as st
 
 def visualize_topics(lda_model, num_words=10):
     topics = {i: [word for word, _ in lda_model.show_topic(i, topn=num_words)] for i in range(lda_model.num_topics)}
@@ -325,8 +299,6 @@ def visualize_topics(lda_model, num_words=10):
     st.pyplot(plt)
 
 
-import matplotlib.pyplot as plt
-import streamlit as st
 
 def user_messages(whatsapp_df):
     # Counting messages per sender
@@ -343,13 +315,6 @@ def user_messages(whatsapp_df):
     st.pyplot(plt)
 
 
-
-import re
-from collections import Counter
-import nltk
-from nltk.corpus import stopwords
-import streamlit as st
-
 def preprocess_and_extract_words(whatsapp_df):
     nltk.download('stopwords', quiet=True)
 
@@ -365,8 +330,7 @@ def preprocess_and_extract_words(whatsapp_df):
 
     return processed_word_freq
 
-import emoji
-from collections import Counter
+
 
 def extract_and_count_emojis(whatsapp_df):
     def extract_emojis(text):
@@ -377,9 +341,6 @@ def extract_and_count_emojis(whatsapp_df):
 
     return emoji_freq
 
-import matplotlib.pyplot as plt
-
-import streamlit as st
 
 def visualize_words_and_emojis(processed_word_freq, emoji_freq):
     top_words = processed_word_freq.most_common(10)
@@ -409,12 +370,6 @@ def visualize_words_and_emojis(processed_word_freq, emoji_freq):
     st.pyplot(plt)
 
 
-
-import pandas as pd
-import numpy as np
-from sklearn.linear_model import LinearRegression
-import matplotlib.pyplot as plt
-import streamlit as st
 
 def forecast_message_trends(whatsapp_df):
     if 'date' not in whatsapp_df.columns:
@@ -456,8 +411,6 @@ def forecast_message_trends(whatsapp_df):
 
 
 
-import streamlit as st
-
 
 def display_alerts(whatsapp_df):
     # Define your alert conditions
@@ -488,8 +441,7 @@ def display_alerts(whatsapp_df):
         st.write("No alerts based on the given conditions.")
 
 
-from transformers import pipeline
-import streamlit as st
+
 
 def transformers_sentiment_analysis(whatsapp_df):
     # Load sentiment analysis pipeline
@@ -505,8 +457,6 @@ def transformers_sentiment_analysis(whatsapp_df):
         st.write(f"Message: {example_message}\nSentiment: {result[0]}")
 
 
-from transformers import pipeline
-import streamlit as st
 
 def transformers_ner_analysis(whatsapp_df):
     # Load NER pipeline
@@ -524,57 +474,6 @@ def transformers_ner_analysis(whatsapp_df):
         for entity in result:
             st.write(f"{entity['entity_group']} ({entity['score']:.2f}): {entity['word']}")
 
-
-from transformers import pipeline
-import streamlit as st
-
-def transformers_text_summarization(whatsapp_df):
-    # Load summarization pipeline
-    summarizer = pipeline("summarization")
-
-    # User input for selecting the range of messages
-    start_index = st.number_input("Start index of messages", min_value=0, max_value=len(whatsapp_df)-1, value=30)
-    end_index = st.number_input("End index of messages", min_value=0, max_value=len(whatsapp_df)-1, value=35)
-
-    # Ensure start index is less than end index
-    if start_index >= end_index:
-        st.error("Start index should be less than end index.")
-        return
-
-    # Concatenate messages for summarization
-    long_text = ' '.join(whatsapp_df['message'][start_index:end_index])
-
-    # Summarize
-    if st.button("Summarize"):
-        with st.spinner("Summarizing..."):
-            summary = summarizer(long_text, max_length=130, min_length=30, do_sample=False)
-            st.write("Original Text:")
-            st.write(long_text)
-            st.write("Summary:")
-            st.write(summary[0]['summary_text'])
-
-
-from transformers import pipeline
-import streamlit as st
-
-def transformers_text_generation():
-    # Load text generation pipeline
-    generator = pipeline("text-generation", model="gpt2")
-
-    # User input for starting text
-    starting_text = st.text_input("Enter starting text for generation", "Let's plan a meetup")
-
-    # Generate text
-    if st.button("Generate Text"):
-        with st.spinner("Generating..."):
-            generated = generator(starting_text, max_length=50, num_return_sequences=1)
-            st.write("Generated Text:")
-            st.write(generated[0]['generated_text'])
-
-
-import pandas as pd
-import matplotlib.pyplot as plt
-import streamlit as st
 
 def message_frequency(whatsapp_df):
     # Ensure the 'timestamp' column is in datetime format
@@ -602,12 +501,7 @@ def message_frequency(whatsapp_df):
     average_response_time = whatsapp_df['response_time_minutes'].mean()
     st.write(f"Average response time: {average_response_time:.2f} minutes")
 
-from wordcloud import WordCloud
-import matplotlib.pyplot as plt
-import streamlit as st
-import nltk
-from nltk.corpus import stopwords
-import re
+
 
 def generate_wordcloud(whatsapp_df):
     nltk.download('stopwords', quiet=True)
@@ -630,7 +524,6 @@ def generate_wordcloud(whatsapp_df):
     st.pyplot(plt)
 
 
-import streamlit as st
 
 def show_top_users_by_messages(whatsapp_df):
     top_senders = whatsapp_df['sender'].value_counts().head(5)
@@ -655,7 +548,7 @@ def show_one_word_messages_top_users(whatsapp_df):
     st.bar_chart(one_word_counts)
 
 
-import emoji
+
 
 def show_emoji_usage_top_users(whatsapp_df):
     whatsapp_df['emoji_count'] = whatsapp_df['message'].apply(lambda x: len([char for char in x if char in emoji.EMOJI_DATA]))
@@ -665,7 +558,6 @@ def show_emoji_usage_top_users(whatsapp_df):
     st.bar_chart(max_emojis)
 
 
-import matplotlib.pyplot as plt
 
 def most_active_time(whatsapp_df):
     # Convert 'timestamp' column to datetime if it's not already
@@ -694,11 +586,6 @@ def laugh_counter(whatsapp_df):
     st.write(f"Total LOLs and Hahas in the chat: {total_laughs}")
 
 
-from collections import Counter
-import emoji
-from itertools import chain
-
-
 
 def most_used_emojis(whatsapp_df):
     def extract_emojis(s):
@@ -712,17 +599,7 @@ def most_used_emojis(whatsapp_df):
         st.write(f"{item[0]}: {item[1]} times")
 
 
-import random
 
-import streamlit as st
-
-import pandas as pd
-
-import streamlit as st
-import pandas as pd
-
-import streamlit as st
-import pandas as pd
 
 def mystery_user_challenge(data, sample_size=5):
     # Check if the sample is already stored in session state
@@ -731,9 +608,20 @@ def mystery_user_challenge(data, sample_size=5):
 
     sample_messages = st.session_state.sample_messages
 
+    # Get the current theme from Streamlit
+    is_dark_mode = st.session_state.get("theme", "light") == "dark"
+
+    # Define colors for dark and light modes with good contrast
+    text_color = "#ffffff" if is_dark_mode else "#000000"
+    header_color = "#4CAF50" if is_dark_mode else "#2196F3"
+    message_bg_color = "rgba(255, 255, 255, 0.1)" if is_dark_mode else "#f1f1f1"  # Light background for light mode
+    message_text_color = "#ffffff" if is_dark_mode else "#000000"  # Ensure text is visible
+    guess_correct_color = "#4CAF50"
+    guess_incorrect_color = "#F44336"
+
     # Display the challenge
-    st.markdown("""<h2 style='color: #4CAF50;'>Mystery User Challenge</h2>""", unsafe_allow_html=True)
-    st.markdown("<p style='font-size: 18px;'>Guess who sent these messages:</p>", unsafe_allow_html=True)
+    st.markdown(f"<h2 style='color: {header_color};'>Mystery User Challenge</h2>", unsafe_allow_html=True)
+    st.markdown(f"<p style='font-size: 18px; color: {text_color};'>Guess who sent these messages:</p>", unsafe_allow_html=True)
 
     # Initialize session state for storing user guesses
     if 'guesses' not in st.session_state:
@@ -741,35 +629,31 @@ def mystery_user_challenge(data, sample_size=5):
 
     # Display messages and input fields
     for index, (i, row) in enumerate(sample_messages.iterrows()):
-        st.markdown(f"<p style='background-color: #f1f1f1; padding: 10px; border-radius: 5px;'>Message: '<strong>{row['message']}</strong>'</p>", unsafe_allow_html=True)
+        st.markdown(f"""
+        <p style='background-color: {message_bg_color}; padding: 10px; border-radius: 5px; color: {message_text_color};'>
+        Message: '<strong>{row['message']}</strong>'
+        </p>""", unsafe_allow_html=True)
+        
         st.session_state.guesses[index] = st.text_input(
             f"Guess for message {index+1}", value=st.session_state.guesses[index], key=f"guess_{i}"
         )
 
     # Add a submit button for processing guesses
     if st.button("Submit Guesses"):
-        st.markdown("""<h3 style='color: #2196F3;'>Your Guesses vs Actual Users</h3>""", unsafe_allow_html=True)
+        st.markdown(f"<h3 style='color: {header_color};'>Your Guesses vs Actual Users</h3>", unsafe_allow_html=True)
         for i, (guess, (j, row)) in enumerate(zip(st.session_state.guesses, sample_messages.iterrows()), 1):
-            actual_user = row['sender']  # Assuming 'user' column exists in the data
+            actual_user = row['sender']  # Assuming 'sender' column exists in the data
             if guess.strip().lower() == actual_user.strip().lower():
-                color = "#4CAF50"  # Green for correct guesses
+                color = guess_correct_color  # Green for correct guesses
             else:
-                color = "#F44336"  # Red for incorrect guesses
-            st.markdown(f"<p style='font-size: 16px;'><strong>Message {i}:</strong> Your guess: <span style='color: {color};'>{guess}</span> | Actual user: <strong>{actual_user}</strong></p>", unsafe_allow_html=True)
-
-# Example usage (ensure `data` has 'message' and 'user' columns)
-# data = pd.DataFrame({
-#     'message': ['Hello!', 'How are you?', 'Good morning!', 'See you later.', 'Take care!'],
-#     'user': ['Alice', 'Bob', 'Charlie', 'David', 'Eve']
-# })
-# mystery_user_challenge(data
-# Usage
-#mystery_user_challenge(data)
+                color = guess_incorrect_color  # Red for incorrect guesses
+            st.markdown(f"""
+            <p style='font-size: 16px; color: {text_color};'>
+            <strong>Message {i}:</strong> Your guess: <span style='color: {color};'>{guess}</span> | Actual user: <strong>{actual_user}</strong>
+            </p>""", unsafe_allow_html=True)
 
 
 
-from collections import Counter
-import random
 
 def chat_wordle(whatsapp_df):
     common_words = [word for word, count in Counter(" ".join(whatsapp_df['message']).split()).items() if count > 5]
@@ -785,7 +669,7 @@ def chat_wordle(whatsapp_df):
         else:
             st.error("Wrong guess. Try again!")
 
-from textblob import TextBlob
+
 
 def mood_meter(whatsapp_df):
     whatsapp_df['sentiment'] = whatsapp_df['message'].apply(lambda x: TextBlob(x).sentiment.polarity)
@@ -801,7 +685,6 @@ def mood_meter(whatsapp_df):
     st.pyplot(plt)
 
 
-import streamlit as st
 
 def display_big_bold_centered_text(text):
     st.markdown(f"""
