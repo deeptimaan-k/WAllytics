@@ -44,7 +44,7 @@ WAllytics is a WhatsApp chat analysis tool that utilizes **Natural Language Proc
 3. Explore visualizations and insights based on your chat data.
 
 ## 🔥 Demo Screenshot
-![WAllytics UI](assets/screenshot.png)
+![WAllytics UI](assets/ss.png)
 
 ## 🤝 Contributing
 Feel free to submit issues or pull requests to enhance WAllytics!
